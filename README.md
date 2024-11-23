@@ -1,7 +1,7 @@
 # Real-Time Chat Website
 
 This is a **real-time chat website** that allows users to connect with each other and chat in real-time. It is built using the **MERN stack** (MongoDB, Express.js, React.js, and Node.js) along with **Socket.io**, **Redux Toolkit**, and **Tailwind CSS**.
-
+# LIVE = https://chatapp-frontend-f2varpu9a-yashsharma499s-projects.vercel.app/login
 ---
 
 ## Technologies Used
@@ -107,37 +107,3 @@ Ensure you have the following installed on your machine:
 - **Tailwind CSS**: Styles and responsive design.
 
 ---
-
-## Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your message here"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature-name
-   ```
-5. Open a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
----
-
-## Contact
-
-For any questions or feedback, please reach out to:
-- **Email**: your-email@example.com
-- **GitHub**: [your-username](https://github.com/your-username)
-
