@@ -18,6 +18,18 @@ This is a **real-time chat website** that allows users to connect with each othe
 #SCREENSHOTS
 ![image](https://github.com/user-attachments/assets/6078b1e9-a552-41fb-ae2d-f79bb8838354)
 
+![image](https://github.com/user-attachments/assets/eb110b48-b21f-442b-8ed7-298e3958399c)
+
+![image](https://github.com/user-attachments/assets/a3c89147-2a08-44a1-ac3e-a98ce0781892)
+
+![image](https://github.com/user-attachments/assets/6929d8d7-96d5-4a57-9380-79c1e6ec75b5)
+
+![image](https://github.com/user-attachments/assets/6e656128-3cde-4178-bfa9-4114910cf243)
+
+
+
+
+
 
 
 
@@ -37,12 +49,11 @@ This is a **real-time chat website** that allows users to connect with each othe
 - **Group Creation**: Users can create chat rooms and invite others to join.
 - **Notifications**: Receive notifications for new messages.
 - **Emojis**: Send and receive emojis in messages.
+- **Media Sharing**: Users can send and receive photos, videos, audio files, and other file types.
 
 ### Additional Features
 - **Profile Management**:
   - Update avatar and display name.
-- **Room Management**:
-  - Create private or public chat rooms.
 - **Search Functionality**:
   - Search for users or chat rooms.
 - **Responsive Design**:
