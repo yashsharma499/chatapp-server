@@ -1,20 +1,25 @@
 import express from "express";
 import {
   acceptFriendRequest,
+  changePassword,
   getMyFriends,
   getMyNotifications,
   getMyProfile,
+  getOnlineFriends,
   login,
   logout,
   newUser,
   searchUser,
   sendFriendRequest,
+  updateProfile,
 } from "../controllers/user.js";
 import {
   acceptRequestValidator,
+  changePasswordValidator,
   loginValidator,
   registerValidator,
   sendRequestValidator,
+  updateProfileValidator,
   validateHandler,
 } from "../lib/validators.js";
 import { isAuthenticated } from "../middlewares/auth.js";
@@ -30,6 +35,21 @@ app.post("/login", loginValidator(), validateHandler, login);
 app.use(isAuthenticated);
 
 app.get("/me", getMyProfile);
+
+app.put(
+  "/me",
+  singleAvatar,
+  updateProfileValidator(),
+  validateHandler,
+  updateProfile
+);
+
+app.put(
+  "/password",
+  changePasswordValidator(),
+  validateHandler,
+  changePassword
+);
 
 app.get("/logout", logout);
 
@@ -52,5 +72,7 @@ app.put(
 app.get("/notifications", getMyNotifications);
 
 app.get("/friends", getMyFriends);
+
+app.get("/presence", getOnlineFriends);
 
 export default app;

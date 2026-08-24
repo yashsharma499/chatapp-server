@@ -15,6 +15,16 @@ const CHAT_LEAVED = "CHAT_LEAVED";
 
 const ONLINE_USERS = "ONLINE_USERS";
 
+// Message lifecycle
+const MESSAGE_EDITED = "MESSAGE_EDITED";
+const MESSAGE_DELETED = "MESSAGE_DELETED";
+const MESSAGE_SEEN = "MESSAGE_SEEN";
+
+// Sent back to the author of a socket message so an optimistic bubble can be
+// reconciled with its persisted _id (or rolled back on failure).
+const MESSAGE_ACK = "MESSAGE_ACK";
+const MESSAGE_ERROR = "MESSAGE_ERROR";
+
 export {
   ALERT,
   REFETCH_CHATS,
@@ -27,4 +37,9 @@ export {
   CHAT_JOINED,
   CHAT_LEAVED,
   ONLINE_USERS,
+  MESSAGE_EDITED,
+  MESSAGE_DELETED,
+  MESSAGE_SEEN,
+  MESSAGE_ACK,
+  MESSAGE_ERROR,
 };

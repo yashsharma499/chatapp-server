@@ -6,6 +6,7 @@ import { User } from "../models/user.js";
 import { ErrorHandler } from "../utils/utility.js";
 import { cookieOptions } from "../utils/features.js";
 import { adminSecretKey } from "../app.js";
+import { CHATTU_ADMIN_TOKEN } from "../constants/config.js";
 
 const adminLogin = TryCatch(async (req, res, next) => {
   const { secretKey } = req.body;
@@ -18,7 +19,7 @@ const adminLogin = TryCatch(async (req, res, next) => {
 
   return res
     .status(200)
-    .cookie("chattu-admin-token", token, {
+    .cookie(CHATTU_ADMIN_TOKEN,token, {
       ...cookieOptions,
       maxAge: 1000 * 60 * 15,
     })
@@ -31,7 +32,7 @@ const adminLogin = TryCatch(async (req, res, next) => {
 const adminLogout = TryCatch(async (req, res, next) => {
   return res
     .status(200)
-    .cookie("chattu-admin-token", "", {
+    .cookie(CHATTU_ADMIN_TOKEN,"", {
       ...cookieOptions,
       maxAge: 0,
     })
@@ -60,7 +61,7 @@ const allUsers = TryCatch(async (req, res) => {
       return {
         name,
         username,
-        avatar: avatar.url,
+        avatar: avatar?.url || "",
         _id,
         groups,
         friends,
@@ -87,15 +88,20 @@ const allChats = TryCatch(async (req, res) => {
         _id,
         groupChat,
         name,
-        avatar: members.slice(0, 3).map((member) => member.avatar.url),
+        avatar: members
+          .slice(0, 3)
+          .map((member) => member.avatar?.url)
+          .filter(Boolean),
         members: members.map(({ _id, name, avatar }) => ({
           _id,
           name,
-          avatar: avatar.url,
+          avatar: avatar?.url || "",
         })),
         creator: {
+          // A group whose creator account was deleted used to throw here on
+          // `creator.avatar.url` despite the optional chain on `creator`.
           name: creator?.name || "None",
-          avatar: creator?.avatar.url || "",
+          avatar: creator?.avatar?.url || "",
         },
         totalMembers: members.length,
         totalMessages,
@@ -114,8 +120,11 @@ const allMessages = TryCatch(async (req, res) => {
     .populate("sender", "name avatar")
     .populate("chat", "groupChat");
 
-  const transformedMessages = messages.map(
-    ({ content, attachments, _id, sender, createdAt, chat }) => ({
+  // Messages whose chat or sender has since been deleted leave a null populate
+  // result; dereferencing it took the whole admin page down with a 500.
+  const transformedMessages = messages
+    .filter(({ chat, sender }) => chat && sender)
+    .map(({ content, attachments, _id, sender, createdAt, chat }) => ({
       _id,
       attachments,
       content,
@@ -125,10 +134,9 @@ const allMessages = TryCatch(async (req, res) => {
       sender: {
         _id: sender._id,
         name: sender.name,
-        avatar: sender.avatar.url,
+        avatar: sender.avatar?.url || "",
       },
-    })
-  );
+    }));
 
   return res.status(200).json({
     success: true,
@@ -165,7 +173,10 @@ const getDashboardStats = TryCatch(async (req, res) => {
       (today.getTime() - message.createdAt.getTime()) / dayInMiliseconds;
     const index = Math.floor(indexApprox);
 
-    messages[6 - index]++;
+    // Clamp: a message written a moment ago can produce a slightly negative
+    // index, and messages[7] silently added an eighth bucket to the chart.
+    const bucket = 6 - index;
+    if (bucket >= 0 && bucket < 7) messages[bucket]++;
   });
 
   const stats = {
