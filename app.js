@@ -7,6 +7,7 @@
 import "dotenv/config";
 
 import express from "express";
+import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import { Server } from "socket.io";
 import { createServer } from "http";
@@ -124,15 +125,23 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// Render's health check and uptime pingers hit this.
-app.get("/health", (req, res) =>
-  res.status(200).json({
-    success: true,
-    status: "ok",
+// Render's health check and uptime pingers hit this. It reports the database
+// state explicitly: the process can be listening while Mongo is unreachable,
+// and a silent 200 in that state hides a broken deployment.
+const DB_STATES = ["disconnected", "connected", "connecting", "disconnecting"];
+
+app.get("/health", (req, res) => {
+  const readyState = mongoose.connection.readyState;
+  const dbConnected = readyState === 1;
+
+  res.status(dbConnected ? 200 : 503).json({
+    success: dbConnected,
+    status: dbConnected ? "ok" : "degraded",
+    database: DB_STATES[readyState] || "unknown",
     uptime: process.uptime(),
     env: envMode,
-  })
-);
+  });
+});
 
 app.get("/", (req, res) => res.send("Chattu API is running"));
 
@@ -290,15 +299,41 @@ io.on("connection", (socket) => {
 });
 
 const start = async () => {
-  try {
-    await connectDB(mongoURI);
-    server.listen(port, () =>
-      console.log(`Server is running on port ${port} in ${envMode} Mode`)
-    );
-  } catch (error) {
-    console.error("Failed to start server:", error.message);
+  // A missing URI is a config error that retrying cannot fix.
+  if (!mongoURI) {
+    console.error("FATAL: MONGO_URI is not set. Refusing to start.");
     process.exit(1);
   }
+
+  // Bind the port BEFORE connecting to Mongo. Waiting for the database meant a
+  // transient DNS blip (or a paused Atlas cluster) left the port unbound,
+  // which Render reports as "No open ports detected" and treats as a failed
+  // deploy. Now the service comes up, /health reports the database as down,
+  // and the connection is retried in the background until it succeeds.
+  server.listen(port, () =>
+    console.log(`Server listening on port ${port} in ${envMode} Mode`)
+  );
+
+  let attempt = 0;
+
+  const connectWithRetry = async () => {
+    attempt += 1;
+    try {
+      await connectDB(mongoURI);
+      attempt = 0;
+    } catch (error) {
+      // Exponential backoff, capped at 30s.
+      const delay = Math.min(30000, 2000 * 2 ** Math.min(attempt - 1, 4));
+      console.error(
+        `MongoDB connection failed (attempt ${attempt}): ${error.message}. Retrying in ${
+          delay / 1000
+        }s`
+      );
+      setTimeout(connectWithRetry, delay).unref();
+    }
+  };
+
+  connectWithRetry();
 };
 
 start();
