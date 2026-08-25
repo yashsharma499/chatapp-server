@@ -1,2 +1,8 @@
 node_modules
+
+# Every env file except the committed template. The previous pattern only
+# matched ".env" exactly, so a stray ".env.backup" or ".env.local" holding real
+# credentials would have been committed.
 .env
+.env.*
+!.env.example
