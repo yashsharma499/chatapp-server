@@ -1,50 +1,20 @@
-import jwt from "jsonwebtoken";
 import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Message } from "../models/message.js";
 import { User } from "../models/user.js";
 import { ErrorHandler } from "../utils/utility.js";
-import { cookieOptions } from "../utils/features.js";
-import { adminSecretKey } from "../app.js";
-import { CHATTU_ADMIN_TOKEN } from "../constants/config.js";
 
-const adminLogin = TryCatch(async (req, res, next) => {
-  const { secretKey } = req.body;
-
-  const isMatched = secretKey === adminSecretKey;
-
-  if (!isMatched) return next(new ErrorHandler("Invalid Admin Key", 401));
-
-  const token = jwt.sign(secretKey, process.env.JWT_SECRET);
-
-  return res
-    .status(200)
-    .cookie(CHATTU_ADMIN_TOKEN,token, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 15,
-    })
-    .json({
-      success: true,
-      message: "Authenticated Successfully, Welcome BOSS",
-    });
-});
-
-const adminLogout = TryCatch(async (req, res, next) => {
-  return res
-    .status(200)
-    .cookie(CHATTU_ADMIN_TOKEN,"", {
-      ...cookieOptions,
-      maxAge: 0,
-    })
-    .json({
-      success: true,
-      message: "Logged Out Successfully",
-    });
-});
-
+// Confirms the caller is an admin and identifies who they are, so the client
+// can show the console without a second login step.
 const getAdminData = TryCatch(async (req, res, next) => {
   return res.status(200).json({
+    success: true,
     admin: true,
+    user: {
+      _id: req.adminUser._id,
+      name: req.adminUser.name,
+      username: req.adminUser.username,
+    },
   });
 });
 
@@ -52,7 +22,7 @@ const allUsers = TryCatch(async (req, res) => {
   const users = await User.find({});
 
   const transformedUsers = await Promise.all(
-    users.map(async ({ name, username, avatar, _id }) => {
+    users.map(async ({ name, username, avatar, _id, role }) => {
       const [groups, friends] = await Promise.all([
         Chat.countDocuments({ groupChat: true, members: _id }),
         Chat.countDocuments({ groupChat: false, members: _id }),
@@ -63,6 +33,8 @@ const allUsers = TryCatch(async (req, res) => {
         username,
         avatar: avatar?.url || "",
         _id,
+        // Surfaced so an admin can see at a glance who else has access.
+        role: role || "user",
         groups,
         friends,
       };
@@ -198,7 +170,5 @@ export {
   allChats,
   allMessages,
   getDashboardStats,
-  adminLogin,
-  adminLogout,
   getAdminData,
 };

@@ -17,6 +17,5 @@ const corsOptions = {
 };
 
 const CHATTU_TOKEN = "chattu-token";
-const CHATTU_ADMIN_TOKEN = "chattu-admin-token";
 
-export { corsOptions, CHATTU_TOKEN, CHATTU_ADMIN_TOKEN };
+export { corsOptions, CHATTU_TOKEN };

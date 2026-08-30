@@ -46,7 +46,6 @@ const port = process.env.PORT || 3000;
 // Defaulting before .trim() — reading .trim() off an unset NODE_ENV threw a
 // TypeError and crashed the process on boot.
 const envMode = (process.env.NODE_ENV || "PRODUCTION").trim().toUpperCase();
-const adminSecretKey = process.env.ADMIN_SECRET_KEY || "adsasdsdfsdfsdfd";
 
 if (!process.env.JWT_SECRET) {
   console.error("FATAL: JWT_SECRET is not set. Refusing to start.");
@@ -116,10 +115,6 @@ app.use(
 // Signups count every attempt, not just failures. Kept generous because many
 // legitimate users share one public IP behind office/campus NAT.
 app.use("/api/v1/user/new", credentialLimiter(30, 60 * 60 * 1000));
-app.use(
-  "/api/v1/admin/verify",
-  credentialLimiter(15, 15 * 60 * 1000, { skipSuccessfulRequests: true })
-);
 
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/chat", chatRoute);
@@ -357,4 +352,4 @@ const shutdown = (signal) => () => {
 process.on("SIGTERM", shutdown("SIGTERM"));
 process.on("SIGINT", shutdown("SIGINT"));
 
-export { envMode, adminSecretKey, userSocketIDs, io };
+export { envMode, userSocketIDs, io };

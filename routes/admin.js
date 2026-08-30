@@ -1,25 +1,20 @@
 import express from "express";
 import {
-  adminLogin,
-  adminLogout,
   allChats,
   allMessages,
   allUsers,
   getAdminData,
   getDashboardStats,
 } from "../controllers/admin.js";
-import { adminLoginValidator, validateHandler } from "../lib/validators.js";
-import { adminOnly } from "../middlewares/auth.js";
+import { adminOnly, isAuthenticated } from "../middlewares/auth.js";
 
 const app = express.Router();
 
-app.post("/verify", adminLoginValidator(), validateHandler, adminLogin);
-
-app.get("/logout", adminLogout);
-
-// Only Admin Can Accecss these Routes
-
-app.use(adminOnly);
+// Admin is a property of the logged-in account (User.role === "admin"), so
+// every route here needs a normal session first and then the role check.
+// The old flow had a separate /verify endpoint that traded a shared secret for
+// its own cookie, which meant admin access was not tied to any user at all.
+app.use(isAuthenticated, adminOnly);
 
 app.get("/", getAdminData);
 

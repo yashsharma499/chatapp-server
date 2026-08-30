@@ -37,6 +37,15 @@ const schema = new Schema(
         required: true,
       },
     },
+    // Admin access is granted by flipping this field, e.g. in Atlas:
+    //   db.users.updateOne({ username: "yash" }, { $set: { role: "admin" } })
+    // It replaces the old shared ADMIN_SECRET_KEY, which let anyone who knew
+    // one password read every private message without logging in at all.
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
     lastSeen: {
       type: Date,
       default: Date.now,

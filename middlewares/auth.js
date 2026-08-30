@@ -1,8 +1,7 @@
 import jwt from "jsonwebtoken";
 import { ErrorHandler } from "../utils/utility.js";
-import { adminSecretKey } from "../app.js";
 import { TryCatch } from "./error.js";
-import { CHATTU_TOKEN, CHATTU_ADMIN_TOKEN } from "../constants/config.js";
+import { CHATTU_TOKEN } from "../constants/config.js";
 import { User } from "../models/user.js";
 
 const isAuthenticated = TryCatch((req, res, next) => {
@@ -24,23 +23,24 @@ const isAuthenticated = TryCatch((req, res, next) => {
   next();
 });
 
-const adminOnly = (req, res, next) => {
-  const token = req.cookies[CHATTU_ADMIN_TOKEN];
+// Runs after isAuthenticated, so req.user is already the logged-in user's id.
+// Admin is now a property of the account rather than a shared secret, which
+// means access can be granted and revoked per user and every admin action is
+// attributable to a real person.
+const adminOnly = TryCatch(async (req, res, next) => {
+  const user = await User.findById(req.user).select("role name username");
 
-  if (!token)
-    return next(new ErrorHandler("Only Admin can access this route", 401));
+  if (!user)
+    return next(new ErrorHandler("Please login to access this route", 401));
 
-  try {
-    const secretKey = jwt.verify(token, process.env.JWT_SECRET);
+  if (user.role !== "admin")
+    return next(
+      new ErrorHandler("You do not have permission to access this area", 403)
+    );
 
-    if (secretKey !== adminSecretKey)
-      return next(new ErrorHandler("Only Admin can access this route", 401));
-
-    next();
-  } catch {
-    return next(new ErrorHandler("Only Admin can access this route", 401));
-  }
-};
+  req.adminUser = user;
+  next();
+});
 
 const socketAuthenticator = async (err, socket, next) => {
   try {
